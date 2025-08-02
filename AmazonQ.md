@@ -67,6 +67,10 @@ O foco base dele é fornecer uma estrutura educacional em que o aluno possa evol
 - **Secrets Manager:** Gerenciamento de credenciais
 - **STS:** Tokens temporários de acesso
 
+### APIs Disponíveis
+- **Health Check:** `/api/versao` - Retorna versão da aplicação
+- **Tarefas:** `/api/tarefas` - Retorna informações do banco de dados
+
 ### Pontos de Atenção
 1. **Segurança:** Credenciais hardcoded no compose.yml (apenas para desenvolvimento)
 2. **Escalabilidade:** Aplicação monolítica, mas bem estruturada
