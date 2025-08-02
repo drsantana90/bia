@@ -26,3 +26,5 @@ RUN cd client && npm prune --production && rm -rf node_modules/.cache
 EXPOSE 8080
 
 CMD [ "npm", "start" ]
+
+
