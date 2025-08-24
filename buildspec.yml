@@ -3,24 +3,42 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Fazendo login no ECR...      
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 380278406175.dkr.ecr.us-east-1.amazonaws.com
-      - REPOSITORY_URI=380278406175.dkr.ecr.us-east-1.amazonaws.com/bia
+      - echo "=== DEBUG INFORMAÇÕES ==="
+      - echo "Fazendo login no ECR..."
+      - echo "Conta AWS atual:" $(aws sts get-caller-identity --query Account --output text)
+      - echo "Região:" $AWS_DEFAULT_REGION
+      - echo "Commit:" $CODEBUILD_RESOLVED_SOURCE_VERSION
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - echo "Usando conta: $AWS_ACCOUNT_ID"
+      - echo "=== FIM DEBUG ==="
+      - echo "Fazendo login no ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/bia
+      - echo "Repository URI: $REPOSITORY_URI"
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo "Image Tag: $IMAGE_TAG"
   build:
     commands:
       - echo Build iniciado em `date`
-      - echo Gerando imagem da BIA...
+      - echo "Gerando imagem da BIA..."
+      - echo "Usando Dockerfile na raiz do projeto"
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - echo "Imagens criadas:"
+      - docker images | grep bia
   post_build:
     commands:
       - echo Build finalizado com sucesso em `date`
-      - echo Fazendo push da imagem para o ECR...
+      - echo "Fazendo push da imagem para o ECR..."
+      - echo "Push da imagem latest..."
       - docker push $REPOSITORY_URI:latest
+      - echo "Push da imagem com tag $IMAGE_TAG..."
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Gerando artefato da imagem para o ECS
+      - echo "Gerando artefato da imagem para o ECS"
       - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo "Conteúdo do imagedefinitions.json:"
+      - cat imagedefinitions.json
+
 artifacts:
   files: imagedefinitions.json
